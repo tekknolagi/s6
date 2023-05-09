@@ -61,7 +61,7 @@ jobs:
           file: Dockerfile
       # Run tests, and build and push the runtime image using the branch and latest tags if tests pass
       - name: Run S6 Tests
-        run: docker run --rm -w /open-s6/s6/build ${{ steps.buildmeta.outputs.tags }} ninja test
+        run: docker run --rm -w /open_s6/s6/build ${{ steps.buildmeta.outputs.tags }} ninja test
       - name: Extract metadata for tested S6 Docker image push
         id: runtimemeta
         uses: docker/metadata-action@v4

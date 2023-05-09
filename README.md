@@ -81,7 +81,7 @@ You can run the docker container in two different ways:
     The test suite for S6 can be run from within a Docker shell session with:
 
     ```shell
-    (cd /open-s6/s6/build; ninja test)
+    (cd /open_s6/s6/build; ninja test)
     ```
 
 ## Benchmark results
