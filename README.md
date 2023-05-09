@@ -16,6 +16,10 @@ def foo(x):
   return x + 1
 ```
 
+Try it out by running `docker run -it ghcr.io/tekknolagi/s6-runtime`. That will
+drop you into a shell, at which point you can run `python3.7` and `import s6`
+and all that.
+
 ## Project goals
 
 Python is slow, and a lot of researchers use Python as their primary interface
@@ -77,7 +81,7 @@ You can run the docker container in two different ways:
     The test suite for S6 can be run from within a Docker shell session with:
 
     ```shell
-    (cd /open-s6/s6/build; ninja test)
+    (cd /open_s6/s6/build; ninja test)
     ```
 
 ## Benchmark results
