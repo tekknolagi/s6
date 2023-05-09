@@ -4,7 +4,8 @@ on: [push]
 
 env:
   REGISTRY: ghcr.io
-  S6_BUILD_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/s6
+  S6_BUILD_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/s6-build
+  S6_RUNTIME_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/s6-runtime
 
 jobs:
   docker:
@@ -33,5 +34,30 @@ jobs:
           context: .
           tags: ${{ steps.buildmeta.outputs.tags }}
           push: true
+          target: build
+          file: Dockerfile
+      # Run tests, and build and push the runtime image using the branch and latest tags if tests pass
+      - name: Run S6 Tests
+        run: docker run --rm -w /open-s6/s6/build ${{ steps.buildmeta.outputs.tags }} ninja test
+      - name: Extract metadata for tested S6 Docker image push
+        id: runtimemeta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.S6_RUNTIME_IMAGE_NAME }}
+          # once the tests pass, we publish the runtime image using the sha and branch name (e.g. "s6-3.7")
+          # if this is the default branch, we also publish the image as "latest"
+          tags: |
+            type=sha,prefix={{branch}}.
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+      - name: Publish new version of latest S6 Docker images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.runtimemeta.outputs.tags }}
+          labels: ${{ steps.runtimemeta.outputs.labels }}
+          # the build should be efficient, reusing the build image layers from a previous step
+          # TODO(max): Slim down the image by removing unneeded components
           target: build
           file: Dockerfile
