@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as base-env
 RUN apt-get update
 
 # Install some required dependencies.
@@ -22,6 +22,7 @@ ENV CFLAGS=-fno-omit-frame-pointer
 ENV CXXFLAGS=-fno-omit-frame-pointer
 
 # Install python 3.7 from source.
+FROM base-env as python-env
 ARG PYTHON_SRC="/open_s6/python_src"
 ENV PYTHON_INSTALL="/open_s6/python_3_7"
 WORKDIR /open_s6
@@ -37,6 +38,7 @@ ENV PATH="${PYTHON_INSTALL}/bin:${PATH}"
 RUN python3.7 -m pip install --upgrade pip absl-py numpy ipython jupyterlab
 
 # Copy all local files to the container.
+FROM python-env as build
 RUN mkdir s6
 COPY . s6/
 
