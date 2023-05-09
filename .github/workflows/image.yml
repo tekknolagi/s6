@@ -6,6 +6,7 @@ env:
   REGISTRY: ghcr.io
   S6_BUILD_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/s6-build
   S6_RUNTIME_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/s6-runtime
+  S6_DEV_ENV_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/s6-dev-env
 
 jobs:
   docker:
@@ -19,6 +20,28 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for tested S6 development Docker image push
+        id: devmeta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.S6_DEV_ENV_IMAGE_NAME }}
+          # once the tests pass, we publish the runtime image using the sha and branch name (e.g. "s6-3.7")
+          # if this is the default branch, we also publish the image as "latest"
+          tags: |
+            type=sha,prefix={{branch}}.
+            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+      - name: Publish new version of latest S6 development Docker images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.devmeta.outputs.tags }}
+          labels: ${{ steps.devmeta.outputs.labels }}
+          # the build should be efficient, reusing the build image layers from a previous step
+          target: python-env
+          file: Dockerfile
 
       # Build and push the "build" image (only using sha, since it didn't pass tests yet)
       - name: Extract metadata for pre-test S6 Docker image
